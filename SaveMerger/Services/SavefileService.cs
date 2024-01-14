@@ -44,6 +44,7 @@ public class SavefileService : ISavefileService {
             ShowOverwritePrompt = true,
             SuggestedFileName = suggestedFilename,
             SuggestedStartLocation = startLocation,
+            FileTypeChoices = [new FilePickerFileType("celeste") { Patterns = ["*.celeste"] }],
         });
         if (file is null) return null;
 
@@ -92,6 +93,7 @@ public class SavefileService : ISavefileService {
         var minutes = seconds / 60;
         var hours = minutes / 60;
 
+        if (hours > 2) return $"{hours}h";
         if (hours > 0) return $"{hours}h {minutes % 60}min";
         if (minutes > 0) return $"{minutes % 60}min {seconds % 60}s";
 

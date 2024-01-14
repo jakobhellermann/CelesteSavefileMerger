@@ -7,99 +7,134 @@
         x:Class="SaveMerger.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
         Title="SaveMerger">
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Padding" Value="16 8" />
+        </Style>
+    </Window.Styles>
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key='Light'>
+                    <Color x:Key='AppBackgroundColor'>White</Color>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key='Dark'>
+                    <!-- ReSharper disable Xaml.RedundantResource -->
+                    <Color x:Key='AppBackgroundColor'>Black</Color>
+                    <!-- ReSharper restore Xaml.RedundantResource -->
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <DockPanel Margin="0">
-        <TextBlock DockPanel.Dock="Bottom" Margin="8" Text="{Binding Error}" Foreground="Red" />
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="{DynamicResource AppBackgroundColor}"
+                    TintOpacity="1"
+                    MaterialOpacity="0.65" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
 
-        <TabControl Margin="24" TabStripPlacement="Left" SelectedIndex="{Binding TabIndex}">
-            <TabControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel HorizontalAlignment="Right" />
-                </ItemsPanelTemplate>
-            </TabControl.ItemsPanel>
-            <TabItem Header="Select">
-                <Grid VerticalAlignment="Top" RowDefinitions="* 8 auto">
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="0">
-                        <ListBox VerticalAlignment="Center" SelectionMode="Multiple,Toggle"
-                                 ItemsSource="{Binding Savefiles}"
-                                 Selection="{Binding Selection}"
-                                 Grid.IsSharedSizeScope="True">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Index}"
-                                                   Margin="8 0" HorizontalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding PlayerName}"
-                                                   Margin="8 0" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Details}"
-                                                   TextTrimming="WordEllipsis" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </ScrollViewer>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-                        <Button IsEnabled="{Binding EnoughSelectedToMerge}" Command="{Binding Merge}">Merge</Button>
-                        <!-- <CheckBox>Remove Unplayed Maps</CheckBox> -->
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Merge" IsEnabled="{Binding TabMergeEnabled}">
-                <Grid RowDefinitions="Auto,8,Auto,8,Auto">
-                    <TextBlock IsVisible="{Binding !Resolutions.Count}">No resolutions necessary!</TextBlock>
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
-                        <ItemsControl ItemsSource="{Binding Resolutions}" Grid.IsSharedSizeScope="True">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0 0 0 8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
-                                            <ColumnDefinition Width="8" />
-                                            <ColumnDefinition Width="Auto" SharedSizeGroup="B" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding Path}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBox Grid.Column="2" Text="{Binding NewText}" Watermark="{Binding Values}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                    <Button Grid.Row="4" IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}">
-                        Next
-                    </Button>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
-                <StackPanel Spacing="8">
-                    <TextBlock TextWrapping="Wrap"
-                               Text="Note: The merged savefile does not include mod save data, which includes things like speedberry times, whether the lobby heart gate was opened etc. If you'd like this implemented let me know." />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Command="{Binding Save}">Save File</Button>
-                    </StackPanel>
+        <DockPanel Margin="24 46 0 0">
+            <TextBlock DockPanel.Dock="Bottom" Margin="8" Text="{Binding Error}" Foreground="Red" />
 
-                    <Expander VerticalAlignment="Top">
-                        <Expander.Header>
-                            Savefile Contents
-                        </Expander.Header>
-                        <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                                      MaxHeight="400">
-                            <SelectableTextBlock Text="{Binding MergedXml, Mode=OneWay}" />
+            <TabControl TabStripPlacement="Left" SelectedIndex="{Binding TabIndex}">
+                <TabControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel HorizontalAlignment="Right" />
+                    </ItemsPanelTemplate>
+                </TabControl.ItemsPanel>
+                <TabItem Header="Select">
+                    <Grid VerticalAlignment="Top" RowDefinitions="* 8 auto">
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="0">
+                            <ListBox VerticalAlignment="Center" SelectionMode="Multiple,Toggle"
+                                     ItemsSource="{Binding Savefiles}"
+                                     Selection="{Binding Selection}"
+                                     Background="Transparent"
+                                     Grid.IsSharedSizeScope="True">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Index}"
+                                                       Margin="8 0" HorizontalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding PlayerName}"
+                                                       FontWeight="SemiBold"
+                                                       Margin="8 0" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Details}"
+                                                       TextTrimming="WordEllipsis" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </ScrollViewer>
-                    </Expander>
-                </StackPanel>
-            </TabItem>
-        </TabControl>
-    </DockPanel>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                            <Button IsEnabled="{Binding EnoughSelectedToMerge}" Command="{Binding Merge}">Merge</Button>
+                            <!-- <CheckBox>Remove Unplayed Maps</CheckBox> -->
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Merge" IsEnabled="{Binding TabMergeEnabled}">
+                    <Grid RowDefinitions="Auto,8,Auto,8,Auto">
+                        <TextBlock IsVisible="{Binding !Resolutions.Count}">No resolutions necessary!</TextBlock>
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
+                            <ItemsControl ItemsSource="{Binding Resolutions}" Grid.IsSharedSizeScope="True">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0 0 0 8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
+                                                <ColumnDefinition Width="8" />
+                                                <ColumnDefinition Width="Auto" SharedSizeGroup="B" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Path}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="2" Text="{Binding NewText}"
+                                                     Watermark="{Binding Values}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <Button Grid.Row="4" IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}">Resolve</Button>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
+                    <StackPanel Spacing="8">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Note: The merged savefile does not include mod save data, which includes things like speedberry times, whether the lobby heart gate was opened etc. If you'd like this implemented let me know." />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Command="{Binding Save}">Save File</Button>
+                        </StackPanel>
+
+                        <Expander VerticalAlignment="Top">
+                            <Expander.Header>
+                                Savefile Contents
+                            </Expander.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
+                                          MaxHeight="400">
+                                <SelectableTextBlock Text="{Binding MergedXml, Mode=OneWay}" />
+                            </ScrollViewer>
+                        </Expander>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+        </DockPanel>
+    </Panel>
 
 </Window>

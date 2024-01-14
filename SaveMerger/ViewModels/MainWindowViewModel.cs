@@ -25,7 +25,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     [NotifyPropertyChangedFor(nameof(TabMergeEnabled), nameof(TabSaveEnabled))] [ObservableProperty]
     private TabIndex _tabIndex = TabIndex.Select;
 
-    public bool TabMergeEnabled => TabIndex >= TabIndex.Merge || EnoughSelectedToMerge;
+    public bool TabMergeEnabled => TabIndex >= TabIndex.Merge;
     public bool TabSaveEnabled => TabIndex >= TabIndex.Save;
 
     [ObservableProperty] private string? _error;
@@ -93,7 +93,8 @@ public partial class MainWindowViewModel : ViewModelBase {
     public async void Save() {
         var text = MergedXml!;
 
-        var path = await _savefileService.Save(text, "0.celeste");
+        var joined = string.Join('+', Selection.SelectedItems.Select(savefile => savefile.Index));
+        var path = await _savefileService.Save(text, joined + ".celeste");
         if (path is null) return;
 
         var proc = new Process();
