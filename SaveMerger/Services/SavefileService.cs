@@ -73,8 +73,14 @@ public class SavefileService : ISavefileService {
                     .Elements("AreaModeStats")
                     .Select(stats => long.Parse(stats.Attribute("TimePlayed")!.Value))
                     .Sum();
-                return (levelsetName, timePlayed);
+                var name = PopularMapLevelSetNames.GetValueOrDefault(levelsetName) ?? levelsetName;
+                return (name, timePlayed);
             })
+            .GroupBy(
+                a => a.name,
+                a => a.timePlayed,
+                (name, times) => (name, timePlayed: times.Sum())
+            )
             .Where(val => val.timePlayed > 0)
             .OrderBy(val => -val.timePlayed)
             .ToList();
