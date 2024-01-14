@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace SaveMerger.Services;
 
@@ -23,4 +21,6 @@ public class DummySavefileService : ISavefileService {
             Path = @"C:\Program Files (x86)\Steam\steamapps\common\Celeste\Saves\2.celeste",
         },
     ];
+
+    public Task<string?> Save(string text, string suggestedFilename) => Task.FromResult<string?>(null);
 }

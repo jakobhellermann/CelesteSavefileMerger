@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace SaveMerger.Services;
@@ -13,4 +14,6 @@ public struct Savefile {
 
 public interface ISavefileService {
     IEnumerable<Savefile> List();
+
+    Task<string?> Save(string text, string suggestedFilename);
 }

@@ -1,4 +1,5 @@
-﻿using System.Xml.Linq;
+﻿using System.Text;
+using System.Xml.Linq;
 
 namespace CelesteSaveMerger;
 
@@ -63,7 +64,7 @@ public static class SaveMerger {
         ]
     );
 
-    public static (XDocument, List<Resolution>) Merge(IEnumerable<XDocument> saves) {
+    public static (XDocument, List<PendingResolution>, List<string>) Merge(IEnumerable<XDocument> saves) {
         var mergedDocument = new XDocument();
 
         var saveDataElements = saves.Select(
@@ -76,26 +77,71 @@ public static class SaveMerger {
         MergeSaveData.Merge(saveData, saveDataElements, context);
         mergedDocument.Add(saveData);
 
-        return (mergedDocument, context.Resolutions);
+        return (mergedDocument, context.Resolutions, context.Errors);
+    }
+
+    public static void ResolveDocument(XDocument document, IEnumerable<Resolution> resolutions) {
+        var saveData = document.Element("SaveData")!;
+        foreach (var resolution in resolutions) {
+            if (PathUtils.LookupPath(resolution.Path, saveData) is not { } element) {
+                throw new Exception($"'{resolution.Path}' does not exist in the document, this shouldn't happen");
+            }
+
+            element.Value = resolution.NewValue;
+        }
+    }
+
+    public static string Resolve(XDocument document, IEnumerable<Resolution> resolutions) {
+        ResolveDocument(document, resolutions);
+        return DocumentToString(document);
+    }
+
+    private class Utf8StringWriter : StringWriter {
+        public override Encoding Encoding => Encoding.UTF8;
+    }
+
+    public static string DocumentToString(XDocument document) {
+        var writer = new Utf8StringWriter();
+        document.Save(writer);
+        return writer.ToString();
+    }
+
+    public static string DocumentToString(XElement document) {
+        var writer = new Utf8StringWriter();
+        document.Save(writer);
+        return writer.ToString();
     }
 }
 
-public struct Resolution {
+public struct PendingResolution {
     public string Path;
     public string[] Values;
 }
 
+public struct Resolution {
+    public required string Path;
+    public required string NewValue;
+}
+
 internal class MergeContext {
     internal string Path = "";
+    public List<string> Errors = [];
 
-    internal List<Resolution> Resolutions = [];
+    internal List<PendingResolution> Resolutions = [];
 
     public void EmitError(string error) {
-        Console.WriteLine("had error: " + error);
+        Errors.Add(error);
+    }
+
+    public void WithPathSegment(string segment, Action f) {
+        var pathBefore = Path;
+        Path = PathUtils.PathJoin(pathBefore, segment);
+        f();
+        Path = pathBefore;
     }
 
     public void EmitResolution(string[] values) {
-        Resolutions.Add(new Resolution {
+        Resolutions.Add(new PendingResolution {
             Path = Path,
             Values = values,
         });
@@ -169,11 +215,15 @@ internal class MergeSameChildren : IMergeElement {
     public void Merge(XElement into, IEnumerable<XElement> all, MergeContext mergeContext) {
         var allArray = all.ToArray();
 
+        HashSet<string> done = [];
+
         for (var i = 0; i < allArray.Length; i++) {
             var elements = allArray[i];
             var others = allArray[(i + 1)..];
 
             foreach (var property in elements.Elements()) {
+                if (done.Contains(property.Name.ToString())) continue;
+
                 var value = property.Value;
                 var allSame = others.All(other => {
                     var otherValue = other.Element(property.Name)?.Value;
@@ -187,17 +237,22 @@ internal class MergeSameChildren : IMergeElement {
 
                     var allValues = allArray.Select(val => val.Element(property.Name)?.Value).OfType<string>()
                         .ToArray();
-                    mergeContext.EmitResolution(allValues);
+
+                    mergeContext.WithPathSegment(property.Name.ToString(),
+                        () => mergeContext.EmitResolution(allValues));
+
                     into.Add(x);
                 }
 
-                foreach (var other in others) {
-                    other.Element(property.Name)?.Remove();
-                }
+                done.Add(property.Name.ToString());
+
+                // foreach (var other in others) {
+                // other.Element(property.Name)?.Remove();
+                // }
             }
 
             foreach (var property in elements.Elements()) {
-                property.Remove();
+                // property.Remove();
             }
         }
     }
@@ -282,12 +337,13 @@ internal class MergeAreas : IMergeElement {
         var allArray = all.ToArray();
 
         var sids = allArray.SelectMany(areas =>
-            areas.Elements().Select(stats => stats.Attribute("SID")?.Value.ToString()).OfType<string>()).Distinct();
+                areas.Elements("AreaStats").Select(stats => stats.Attribute("SID")?.Value.ToString()).OfType<string>())
+            .Distinct();
 
         foreach (var sid in sids) {
-            var allOfSid = allArray.Select(areas =>
-                areas.Elements().Single(stats => stats.Attribute("SID")?.Value == sid)
-            ).ToArray();
+            var allOfSid = allArray.SelectMany(areas => {
+                return areas.Elements().Where(stats => stats.Attribute("SID")?.Value == sid);
+            }).ToArray();
 
             var cassette = allOfSid
                 .Any(stats => stats.Attribute("Cassette")?.Value == "true");
@@ -300,6 +356,7 @@ internal class MergeAreas : IMergeElement {
                 new XAttribute("Cassette", cassette),
                 new XAttribute("SID", sid));
 
+            var modes = new XElement("Modes");
             for (var i = 0; i < 3; i++) {
                 var iCopy = i;
 
@@ -312,8 +369,10 @@ internal class MergeAreas : IMergeElement {
                 SaveMerger.MergeAreaModeStats.Merge(newModeI, mode, mergeContext);
                 mergeContext.Path = contextPath;
 
-                newAreaStats.Add(newModeI);
+                modes.Add(newModeI);
             }
+
+            newAreaStats.Add(modes);
 
             into.Add(newAreaStats);
         }
@@ -377,7 +436,7 @@ internal class MergeByRules : IMergeElement {
             foreach (var element in elements) {
                 if (element.HasAttributes) throw new Exception("has attributes: " + element.Name);
 
-                element.Remove();
+                // element.Remove();
             }
 
 
@@ -416,7 +475,7 @@ internal static class PathUtils {
 
         var acc = element;
         foreach (var segment in elems) {
-            acc = element.Element(segment);
+            acc = acc.Element(segment);
             if (acc is null) return null;
         }
 

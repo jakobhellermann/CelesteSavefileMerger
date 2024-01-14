@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.VisualBasic;
+using Avalonia.Platform.Storage;
 
 namespace SaveMerger.Services;
 
 public class SavefileService : ISavefileService {
+    public IStorageProvider? StorageProvider;
+
     private const string CelesteSaveDir = @"C:\Program Files (x86)\Steam\steamapps\common\Celeste\Saves";
 
     public IEnumerable<Savefile> List() {
@@ -30,6 +31,27 @@ public class SavefileService : ISavefileService {
             })
             .OfType<Savefile>()
             .OrderBy(savefile => savefile.Index);
+    }
+
+    public async Task<string?> Save(string text, string suggestedFilename) {
+        if (StorageProvider is null) return null;
+
+        var startLocation = await StorageProvider.TryGetFolderFromPathAsync(CelesteSaveDir);
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+            Title = "Save Savefile",
+            DefaultExtension = "celeste",
+            ShowOverwritePrompt = true,
+            SuggestedFileName = suggestedFilename,
+            SuggestedStartLocation = startLocation,
+        });
+        if (file is null) return null;
+
+        await using var stream = await file.OpenWriteAsync();
+        await using var streamWriter = new StreamWriter(stream);
+        await streamWriter.WriteAsync(text);
+
+        return file?.TryGetLocalPath();
     }
 
     private static (string, string) ExtractDetails(XDocument doc) {
