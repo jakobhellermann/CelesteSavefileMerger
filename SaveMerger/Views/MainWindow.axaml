@@ -1,0 +1,62 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SaveMerger.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="SaveMerger.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SaveMerger">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <TabControl Margin="24" TabStripPlacement="Left" SelectedIndex="{Binding TabIndex}">
+        <TabControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <WrapPanel HorizontalAlignment="Right" />
+            </ItemsPanelTemplate>
+        </TabControl.ItemsPanel>
+        <TabItem Header="Select">
+            <Grid VerticalAlignment="Top" RowDefinitions="* 8 auto">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="0">
+                    <ListBox VerticalAlignment="Center" SelectionMode="Multiple,Toggle"
+                             ItemsSource="{Binding Savefiles}"
+                             Selection="{Binding Selection}"
+                             Grid.IsSharedSizeScope="True">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Index}"
+                                               Margin="8 0" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding PlayerName}"
+                                               Margin="8 0" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Details}"
+                                               TextTrimming="WordEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+                <Button Grid.Row="2" IsEnabled="{Binding EnoughSelectedToMerge}" Command="{Binding Merge}">
+                    Merge
+                </Button>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Merge" IsEnabled="{Binding TabMergeEnabled}">
+            <TextBlock Margin="5">This is tab 2 content</TextBlock>
+        </TabItem>
+        <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
+            <TextBlock Margin="5">This is tab 3 content</TextBlock>
+        </TabItem>
+    </TabControl>
+
+
+</Window>
