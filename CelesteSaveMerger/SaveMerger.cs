@@ -198,7 +198,7 @@ public static class SaveMerger {
         }
     }
 
-    public static void ResolveDocument(XDocument document, IEnumerable<Resolution> resolutions) {
+    private static void ResolveDocument(XDocument document, IEnumerable<Resolution> resolutions) {
         var saveData = document.Element("SaveData") ?? throw new Exception("Savefile contains no 'SaveData' element");
         foreach (var resolution in resolutions) {
             if (PathUtils.LookupPath(resolution.Path, saveData) is not { } element) {
@@ -218,7 +218,7 @@ public static class SaveMerger {
         public override Encoding Encoding => Encoding.UTF8;
     }
 
-    public static string DocumentToString(XDocument document) {
+    private static string DocumentToString(XDocument document) {
         var writer = new Utf8StringWriter();
         document.Save(writer);
         return writer.ToString();
@@ -363,14 +363,6 @@ internal class MergeSameChildren : IMergeElement {
                 }
 
                 done.Add(property.Name.ToString());
-
-                // foreach (var other in others) {
-                // other.Element(property.Name)?.Remove();
-                // }
-            }
-
-            foreach (var property in elements.Elements()) {
-                // property.Remove();
             }
         }
     }
@@ -562,8 +554,6 @@ internal class MergeByRules : IMergeElement {
 
             foreach (var element in elements) {
                 if (element.HasAttributes) throw new Exception("has attributes: " + element.Name);
-
-                // element.Remove();
             }
 
 
