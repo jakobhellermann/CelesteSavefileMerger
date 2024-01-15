@@ -52,23 +52,21 @@ public class SavefileService : ISavefileService {
         await using var streamWriter = new StreamWriter(stream);
         await streamWriter.WriteAsync(text);
 
-        return file?.TryGetLocalPath();
+        return file.TryGetLocalPath();
     }
 
     private static (string, string) ExtractDetails(XDocument doc) {
         var saveData = doc.Element("SaveData")!;
         var playerName = saveData.Element("Name")!.Value;
 
-        var levelPlaytime = saveData.Element("LevelSets")!.Elements("LevelSetStats")
+        var levelPlaytime = CelesteSaveMerger.SaveMerger.AllLevelSets(saveData)
             .Select(levelSet => {
-                var name = levelSet.Attribute("Name")!.Value;
-                var areas = levelSet.Element("Areas")!;
-                return (name, areas);
+                var name = levelSet.Name == "SaveData" ? "Celeste" : levelSet.Attribute("Name")!.Value;
+                return (name, levelSet);
             })
-            .Concat([("Celeste", saveData.Element("Areas")!)])
             .Select(val => {
-                var (levelsetName, areas) = val;
-                var timePlayed = areas.Elements("AreaStats").Elements("Modes")
+                var (levelsetName, levelSet) = val;
+                var timePlayed = levelSet.Element("Areas")!.Elements("AreaStats").Elements("Modes")
                     .Elements("AreaModeStats")
                     .Select(stats => long.Parse(stats.Attribute("TimePlayed")!.Value))
                     .Sum();
