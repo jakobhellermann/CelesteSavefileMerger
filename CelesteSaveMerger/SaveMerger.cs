@@ -122,9 +122,16 @@ public static class SaveMerger {
         MergeSaveData.Merge(saveData, saveDataElements, context);
         mergedDocument.Add(saveData);
 
-        var mergedLevelSets = AllLevelSets(saveData);
+        var mergedLevelSets = AllLevelSets(saveData).ToArray();
+
+        var id = 0;
         foreach (var levelSet in mergedLevelSets) {
             ValidateStrawberryCount(levelSet, true);
+
+            foreach (var areaStats in levelSet.ElementMust("Areas").Elements("AreaStats")) {
+                areaStats.AttributeMust("ID").Value = id.ToString();
+                id += 1;
+            }
         }
 
         if (anyHasModdedGoldens) {
@@ -139,11 +146,12 @@ public static class SaveMerger {
     }
 
     public static IEnumerable<XElement> AllLevelSets(XElement save) {
-        return save
-            .Elements("LevelSets").Elements("LevelSetStats")
-            .Where(stats => stats.Attribute("Name")?.Value != "Celeste")
+        return new[] { save }
             .Concat(save.Elements("LevelSetRecycleBin").Elements("LevelSetStats"))
-            .Concat([save]);
+            .Concat(
+                save.Elements("LevelSets").Elements("LevelSetStats")
+                    .Where(stats => stats.Attribute("Name")?.Value != "Celeste")
+            );
     }
 
     internal static string SidVanillaFallback(XElement element) {
