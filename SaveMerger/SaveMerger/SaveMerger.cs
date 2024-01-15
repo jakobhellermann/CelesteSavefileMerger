@@ -1,7 +1,11 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 
-namespace CelesteSaveMerger;
+namespace SaveMerger.SaveMerger;
 
 public static class SaveMerger {
     internal const string PendingResolution = "...pending resolution...";

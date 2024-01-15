@@ -137,7 +137,7 @@ public class SavefileService : ISavefileService {
         var saveData = doc.Element("SaveData")!;
         var playerName = saveData.Element("Name")!.Value;
 
-        var levelPlaytime = CelesteSaveMerger.SaveMerger.AllLevelSets(saveData)
+        var levelPlaytime = SaveMerger.SaveMerger.AllLevelSets(saveData)
             .Select(levelSet => {
                 var name = levelSet.Name == "SaveData" ? "Celeste" : levelSet.Attribute("Name")!.Value;
                 return (name, levelSet);

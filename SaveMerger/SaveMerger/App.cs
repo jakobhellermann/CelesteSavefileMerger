@@ -1,12 +1,15 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 
-namespace CelesteSaveMerger;
+namespace SaveMerger.SaveMerger;
 
-public class App {
+public static class App {
     private const string CelesteSaveDir = @"C:\Program Files (x86)\Steam\steamapps\common\Celeste\Saves";
 
-    public static void Main() {
+    public static void ConsoleEntrypoint() {
         var saves = new[] { "0.celeste", "2.celeste", "3.celeste" }
             .Select(s => Path.Combine(CelesteSaveDir, s))
             .Select(path => XDocument.Load(File.OpenText(path)))

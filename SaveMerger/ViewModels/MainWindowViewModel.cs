@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 using Avalonia.Controls.Selection;
 using Avalonia.Data;
-using CelesteSaveMerger;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SaveMerger.SaveMerger;
 using SaveMerger.Services;
 
 namespace SaveMerger.ViewModels;
@@ -127,7 +124,7 @@ public partial class MainWindowViewModel : ViewModelBase {
 
         TryError(() => {
             var saves = Selection.SelectedItems.Select(savefile => savefile.Document);
-            var (result, resolutions, errors) = CelesteSaveMerger.SaveMerger.Merge(saves);
+            var (result, resolutions, errors) = SaveMerger.SaveMerger.Merge(saves);
             _document = result;
 
             if (errors.Count > 0) {
@@ -154,8 +151,8 @@ public partial class MainWindowViewModel : ViewModelBase {
         Error = "";
 
         TryError(() => {
-            var xmlText = CelesteSaveMerger.SaveMerger.Resolve(_document!,
-                Resolutions.Select(resolution => new CelesteSaveMerger.Resolution {
+            var xmlText = SaveMerger.SaveMerger.Resolve(_document!,
+                Resolutions.Select(resolution => new SaveMerger.Resolution {
                     Path = resolution.Path,
                     NewValue = resolution.NewText,
                 }));
