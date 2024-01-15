@@ -1,11 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Avalonia.Controls.Selection;
+using Avalonia.Data;
+using CelesteSaveMerger;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SaveMerger.Services;
 
@@ -17,10 +22,39 @@ public enum TabIndex {
     Save,
 }
 
-public partial class Resolution : ObservableObject {
+public class Resolution : ObservableObject {
     public required string Path { get; init; }
+    public required ResolutionKind Kind { get; init; }
     public required string Values { get; init; }
-    [ObservableProperty] private string _newText = "";
+
+    private string _newText = "";
+
+    public string NewText {
+        get => _newText;
+        set {
+            string result;
+            switch (Kind) {
+                case ResolutionKind.String:
+                case ResolutionKind.Unknown:
+                    result = value.Trim();
+                    break;
+                case ResolutionKind.Bool:
+                    if (bool.TryParse(value, out var boolVal)) result = boolVal ? "true" : "false";
+                    else throw new DataValidationException("needs to be true or false");
+
+                    break;
+                case ResolutionKind.Integer:
+                    if (int.TryParse(value, out var intVal)) result = intVal.ToString();
+                    else throw new DataValidationException("needs to be an integer");
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            SetProperty(ref _newText, SecurityElement.Escape(result));
+        }
+    }
 }
 
 public partial class MainWindowViewModel : ViewModelBase {
@@ -105,6 +139,7 @@ public partial class MainWindowViewModel : ViewModelBase {
             foreach (var resolution in resolutions) {
                 var resolutionItem = new Resolution {
                     Path = resolution.Path,
+                    Kind = resolution.Kind,
                     Values = string.Join(", ", resolution.Values.Distinct()),
                 };
                 resolutionItem.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ResolutionsResolved));
@@ -165,11 +200,11 @@ public partial class MainWindowViewModel : ViewModelBase {
     }
 
     public MainWindowViewModel() : this(new DummySavefileService()) {
-        TabIndex = TabIndex.Select;
+        TabIndex = TabIndex.Merge;
 
-        Resolutions.Add(new Resolution { Path = "Name", Values = "Madeline, Archie" });
-        Resolutions.Add(new Resolution { Path = "AssistMode", Values = "true, false" });
-        Resolutions.Add(new Resolution { Path = "Assists/GameSpeed", Values = "8, 12" });
+        Resolutions.Add(new Resolution { Path = "Name", Values = "Madeline, Archie", Kind = ResolutionKind.String });
+        Resolutions.Add(new Resolution { Path = "AssistMode", Values = "true, false", Kind = ResolutionKind.Bool });
+        Resolutions.Add(new Resolution { Path = "Assists/GameSpeed", Values = "8, 12", Kind = ResolutionKind.Integer });
 
         MergedXml = "<xml>";
     }

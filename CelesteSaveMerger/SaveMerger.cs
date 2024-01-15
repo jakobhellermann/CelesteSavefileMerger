@@ -135,7 +135,7 @@ public static class SaveMerger {
         }
 
         if (anyHasModdedGoldens) {
-            context.EmitResolution(allTotalGoldenCounts.ToArray(), "TotalGoldenStrawberries");
+            context.EmitResolution(allTotalGoldenCounts.ToArray(), ResolutionKind.Integer, "TotalGoldenStrawberries");
         } else {
             var totalGoldenStrawberriesElement = saveData.ElementMust("TotalGoldenStrawberries");
             totalGoldenStrawberriesElement.Value = CountVanillaGoldens(saveData).ToString();
@@ -263,9 +263,17 @@ public static class SaveMerger {
     }
 }
 
+public enum ResolutionKind {
+    String,
+    Integer,
+    Bool,
+    Unknown,
+}
+
 public struct PendingResolution {
-    public string Path;
-    public string[] Values;
+    public required string Path;
+    public required string[] Values;
+    public required ResolutionKind Kind;
 }
 
 public struct Resolution {
@@ -290,9 +298,10 @@ internal class MergeContext {
         Path = pathBefore;
     }
 
-    public void EmitResolution(string[] values, string? path = null) {
+    public void EmitResolution(string[] values, ResolutionKind kind, string? path = null) {
         Resolutions.Add(new PendingResolution {
             Path = path ?? Path,
+            Kind = kind,
             Values = values,
         });
     }
@@ -356,7 +365,7 @@ internal class MergeSame : IMergeElement {
             into.Value = last;
         } else {
             into.Value = SaveMerger.PendingResolution;
-            mergeContext.EmitResolution(allValues.ToArray());
+            mergeContext.EmitResolution(allValues.ToArray(), ResolutionKind.Unknown);
         }
     }
 }
@@ -389,7 +398,7 @@ internal class MergeSameChildren : IMergeElement {
                         .ToArray();
 
                     mergeContext.WithPathSegment(property.Name.ToString(),
-                        () => mergeContext.EmitResolution(allValues));
+                        () => mergeContext.EmitResolution(allValues, ResolutionKind.Unknown));
 
                     into.Add(x);
                 }
