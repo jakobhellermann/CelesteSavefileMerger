@@ -135,7 +135,7 @@
                         <StackPanel Orientation="Vertical" Spacing="16">
                             <Button Command="{Binding Save}">Save File</Button>
 
-                            <Expander VerticalAlignment="Top">
+                            <Expander VerticalAlignment="Top" MinHeight="0">
                                 <Expander.Header>
                                     Savefile Contents
                                 </Expander.Header>
