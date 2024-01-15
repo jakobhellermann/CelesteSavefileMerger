@@ -122,7 +122,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     }
 
     public MainWindowViewModel() : this(new DummySavefileService()) {
-        TabIndex = TabIndex.Select;
+        TabIndex = TabIndex.Save;
 
         Resolutions.Add(new Resolution { Path = "Name", Values = "Madeline, Archie" });
         Resolutions.Add(new Resolution { Path = "AssistMode", Values = "true, false" });

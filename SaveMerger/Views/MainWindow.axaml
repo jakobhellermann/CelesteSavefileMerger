@@ -115,22 +115,29 @@
                     </Grid>
                 </TabItem>
                 <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
-                    <StackPanel Spacing="8">
-                        <TextBlock TextWrapping="Wrap"
-                                   Text="Note: The merged savefile does not include mod save data, which includes things like speedberry times, whether the lobby heart gate was opened etc. If you'd like this implemented let me know." />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Command="{Binding Save}">Save File</Button>
-                        </StackPanel>
+                    <StackPanel>
+                        <TextBlock FontSize="22">Note:</TextBlock>
+                        <TextBlock TextWrapping="Wrap" xml:space="preserve">The following items are not merged and will not be included in the savefile:
+- Save &amp; Quit State
+- Any *-modsave files:
+  This includes things like speedberry times or whether a lobby heart gate was opened
+- That's it but maybe I forgot something important to make sure everyhing looks alright.
+                        </TextBlock>
 
-                        <Expander VerticalAlignment="Top">
-                            <Expander.Header>
-                                Savefile Contents
-                            </Expander.Header>
-                            <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible"
-                                          MaxHeight="400">
-                                <SelectableTextBlock Text="{Binding MergedXml, Mode=OneWay}" />
-                            </ScrollViewer>
-                        </Expander>
+                        <StackPanel Orientation="Vertical" Spacing="16">
+                            <Button Command="{Binding Save}">Save File</Button>
+
+                            <Expander VerticalAlignment="Top">
+                                <Expander.Header>
+                                    Savefile Contents
+                                </Expander.Header>
+                                <ScrollViewer HorizontalScrollBarVisibility="Visible"
+                                              VerticalScrollBarVisibility="Visible"
+                                              MaxHeight="400">
+                                    <SelectableTextBlock Text="{Binding MergedXml, Mode=OneWay}" />
+                                </ScrollViewer>
+                            </Expander>
+                        </StackPanel>
                     </StackPanel>
                 </TabItem>
             </TabControl>
