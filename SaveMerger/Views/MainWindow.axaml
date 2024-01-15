@@ -42,7 +42,7 @@
                     BackgroundSource="Digger"
                     TintColor="{DynamicResource AppBackgroundColor}"
                     TintOpacity="1"
-                    MaterialOpacity="0.65" />
+                    MaterialOpacity="0.75" />
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
 
