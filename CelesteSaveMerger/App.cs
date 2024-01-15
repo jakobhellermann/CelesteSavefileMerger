@@ -14,14 +14,6 @@ public class App {
         try {
             var (merged, resolutions, errors) = SaveMerger.Merge(saves);
 
-            foreach (var remaining in saves) {
-                var remainingWriter = new Utf8StringWriter();
-                remaining.Save(remainingWriter);
-
-                Console.WriteLine(remainingWriter.ToString());
-                Console.WriteLine("------");
-            }
-
             var writer = new Utf8StringWriter();
             merged.Save(writer);
             Console.WriteLine(writer.ToString());

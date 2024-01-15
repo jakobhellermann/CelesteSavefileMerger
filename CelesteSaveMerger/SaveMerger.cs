@@ -12,7 +12,7 @@ public static class SaveMerger {
             ("Areas", new MergeAreas()),
             // todo poem
             ("UnlockedAreas", MergeLong.Max),
-            // todo totalstrawberries
+            ("TotalStrawberries", new MergeFixed("0")),
         ]));
 
     private static readonly MergeByRules MergeSaveData = new([
@@ -27,7 +27,8 @@ public static class SaveMerger {
         ("TheoSisterName", new MergeSame()),
         ("UnlockedAreas", MergeLong.Max),
         ("TotalDeaths", MergeLong.Sum),
-        // todo totalstrawberries, totalgoldenstrawberries
+        ("TotalStrawberries", new MergeFixed("0")),
+        ("TotalGoldenStrawberries", new MergeFixed("0")),
         ("TotalJumps", MergeLong.Sum),
         ("TotalWallJumps", MergeLong.Sum),
         ("TotalDashes", MergeLong.Sum),
@@ -50,7 +51,7 @@ public static class SaveMerger {
             ("Checkpoints", MergeFlags.ByChildren),
         ],
         [
-            // TODO ("TotalStrawberries", ),
+            ("TotalStrawberries", new MergeFixed("0")),
             ("Completed", new MergeBoolTowardsTrue()),
             ("SingleRunCompleted", new MergeBoolTowardsTrue()),
             ("FullClear", new MergeBoolTowardsTrue()),
@@ -64,24 +65,141 @@ public static class SaveMerger {
         ]
     );
 
+    private static readonly Dictionary<string, string[][]> GoldenBerryIds = new() {
+        { "Celeste/0-Intro", [[], [], []] },
+        { "Celeste/1-ForsakenCity", [["1:12", "end:4"], ["00:25"], ["00:50"]] },
+        { "Celeste/2-OldSite", [["start:5"], ["start:5"], ["00:6"]] },
+        { "Celeste/3-CelestialResort", [["s0:7"], ["00:2"], ["00:86"]] },
+        { "Celeste/4-GoldenRidge", [["a-00:13"], ["a-00:41"], ["00:1"]] },
+        { "Celeste/5-MirrorTemple", [["a-00b:3"], ["start:3"], ["00:25"]] },
+        { "Celeste/6-Reflection", [["00:51"], ["a-00:137"], ["00:3"]] },
+        { "Celeste/7-Summit", [["a-00:57"], ["a-00:102"], ["01:334"]] },
+        { "Celeste/8-Epilogue", [[], [], []] },
+        { "Celeste/9-Core", [["a-00:19"], ["a-00:22"], ["00:93"]] },
+        { "Celeste/LostLevels", [["a-00:449"], [], []] },
+    };
+
     public static (XDocument, List<PendingResolution>, List<string>) Merge(IEnumerable<XDocument> saves) {
         var mergedDocument = new XDocument();
 
         var saveDataElements = saves.Select(
             document => document.Element("SaveData") ?? throw new Exception("`SaveData`-Element does not exist in save")
-        );
+        ).ToArray();
 
         var context = new MergeContext();
+
+        var anyHasModdedGoldens = false;
+        var allTotalGoldenCounts = new List<string>();
+
+        foreach (var save in saveDataElements) {
+            var totalGoldenStrawberries = int.Parse(save.ElementMust("TotalGoldenStrawberries").Value);
+            var vanillaGoldenCount = CountVanillaGoldens(save);
+            anyHasModdedGoldens |= totalGoldenStrawberries != vanillaGoldenCount;
+            allTotalGoldenCounts.Add(totalGoldenStrawberries.ToString());
+
+            var levelSets = AllLevelSets(save);
+            foreach (var levelSet in levelSets) {
+                ValidateStrawberryCount(levelSet, false);
+            }
+        }
 
         var saveData = new XElement("SaveData");
         MergeSaveData.Merge(saveData, saveDataElements, context);
         mergedDocument.Add(saveData);
 
+        var mergedLevelSets = AllLevelSets(saveData);
+        foreach (var levelSet in mergedLevelSets) {
+            ValidateStrawberryCount(levelSet, true);
+        }
+
+        if (anyHasModdedGoldens) {
+            context.EmitResolution(allTotalGoldenCounts.ToArray(), "TotalGoldenStrawberries");
+        } else {
+            var totalGoldenStrawberriesElement = saveData.ElementMust("TotalGoldenStrawberries");
+            totalGoldenStrawberriesElement.Value = CountVanillaGoldens(saveData).ToString();
+        }
+
+
         return (mergedDocument, context.Resolutions, context.Errors);
     }
 
+    public static IEnumerable<XElement> AllLevelSets(XElement save) {
+        return save
+            .ElementMust("LevelSets").Elements("LevelSetStats")
+            .Where(stats => stats.Attribute("Name")?.Value != "Celeste")
+            .Concat(save.ElementMust("LevelSetRecycleBin").Elements("LevelSetStats"))
+            .Concat([save]);
+    }
+
+    private static int CountVanillaGoldens(XElement saveFile) {
+        var fileCountCalculated = 0;
+
+        var areaStats = saveFile
+            .ElementMust("Areas")
+            .Elements("AreaStats");
+
+        foreach (var areaStat in areaStats) {
+            var sid = areaStat.AttributeMust("SID").Value;
+
+            var modes = areaStat.ElementMust("Modes").Elements("AreaModeStats").ToArray();
+            if (modes.Length != 3) throw new Exception($"{sid} had {modes.Length} modes instead of 3");
+
+            for (var i = 0; i < 3; i++) {
+                var strawberries = modes[i].ElementMust("Strawberries");
+                if (GoldenBerryIds.GetValueOrDefault(sid) is not { } modeGoldenIds) continue;
+
+                var goldenIds = modeGoldenIds[i];
+                var nGoldens = strawberries.Elements("EntityID")
+                    .Count(entity => goldenIds.Contains(entity.AttributeMust("Key").Value));
+
+                fileCountCalculated += nGoldens;
+            }
+        }
+
+        return fileCountCalculated;
+    }
+
+    private static void ValidateStrawberryCount(XElement levelSet, bool fixup) {
+        var setCountElement = levelSet.ElementMust("TotalStrawberries");
+
+        var setCountSaved = int.Parse(setCountElement.Value);
+        var setCountCalculated = 0;
+
+        var areaModeStats = levelSet
+            .ElementMust("Areas")
+            .Elements("AreaStats")
+            .Elements("Modes")
+            .Elements("AreaModeStats");
+        foreach (var stats in areaModeStats) {
+            var areaCountAttribute = stats.AttributeMust("TotalStrawberries");
+            var areaCountSaved = int.Parse(areaCountAttribute.Value);
+            var areaCountCalculated = stats.ElementMust("Strawberries").Elements("EntityID").Count();
+            setCountCalculated += areaCountCalculated;
+
+
+            if (areaCountSaved != areaCountCalculated) {
+                if (fixup) {
+                    areaCountAttribute.Value = areaCountCalculated.ToString();
+                } else {
+                    throw new Exception(
+                        $"Inconsistent Savefile: TotalStrawberries {areaCountAttribute} does not match actual count {areaCountCalculated} in '{stats.Parent!.Parent!.Attribute("SID")?.Value}'");
+                }
+            }
+        }
+
+        if (setCountSaved != setCountCalculated) {
+            if (fixup) {
+                setCountElement.Value = setCountCalculated.ToString();
+            } else {
+                var name = levelSet.Attribute("Name")?.Value ?? "Celeste";
+                throw new Exception(
+                    $"Inconsistent Savefile: TotalStrawberries {setCountSaved} does not match actual count {setCountCalculated} in {name}");
+            }
+        }
+    }
+
     public static void ResolveDocument(XDocument document, IEnumerable<Resolution> resolutions) {
-        var saveData = document.Element("SaveData")!;
+        var saveData = document.Element("SaveData") ?? throw new Exception("Savefile contains no 'SaveData' element");
         foreach (var resolution in resolutions) {
             if (PathUtils.LookupPath(resolution.Path, saveData) is not { } element) {
                 throw new Exception($"'{resolution.Path}' does not exist in the document, this shouldn't happen");
@@ -140,9 +258,9 @@ internal class MergeContext {
         Path = pathBefore;
     }
 
-    public void EmitResolution(string[] values) {
+    public void EmitResolution(string[] values, string? path = null) {
         Resolutions.Add(new PendingResolution {
-            Path = Path,
+            Path = path ?? Path,
             Values = values,
         });
     }
@@ -171,7 +289,7 @@ internal class MergeChildFlags(string childTag) : IMergeElement {
 
 internal class MergeFlags(Func<XElement, string> distinctBy) : IMergeElement {
     public static MergeFlags ByChildren = new(element => element.Value);
-    public static MergeFlags ByAttribute(string attribute) => new(element => element.Attribute(attribute)!.Value);
+    public static MergeFlags ByAttribute(string attribute) => new(element => element.AttributeMust(attribute).Value);
 
     public void Merge(XElement into, IEnumerable<XElement> elements, MergeContext mergeContext) {
         var flags = elements.SelectMany(element => element.Elements())
@@ -360,7 +478,8 @@ internal class MergeAreas : IMergeElement {
             for (var i = 0; i < 3; i++) {
                 var iCopy = i;
 
-                var mode = allOfSid.Select(stats => stats.Element("Modes")!.Elements("AreaModeStats").ElementAt(iCopy))
+                var mode = allOfSid
+                    .Select(stats => stats.ElementMust("Modes").Elements("AreaModeStats").ElementAt(iCopy))
                     .ToArray();
 
                 var contextPath = mergeContext.Path;
@@ -399,6 +518,14 @@ internal class MergeChildrenOrdered(IMergeElement rule) : IMergeElement {
             into.Add(newValueI);
         }
     }
+}
+
+internal class MergeFixed(string value) : IMergeElement, IMergeAttribute {
+    public void Merge(XElement into, IEnumerable<XElement> elements, MergeContext mergeContext) {
+        into.Value = value;
+    }
+
+    public string Merge(IEnumerable<string> values, MergeContext mergeContext) => value;
 }
 
 internal class MergeByRules : IMergeElement {
@@ -485,4 +612,22 @@ internal static class PathUtils {
     public static string PathJoin(string pathA, string pathB) =>
         pathA + (!pathA.EndsWith('/') && !pathB.StartsWith('/') && pathA.Length > 0 && pathB.Length > 0 ? "/" : "") +
         pathB;
+}
+
+public static class XElementExtensions {
+    public static XElement ElementOrCreate(this XElement element, string name) {
+        if (element.Element(name) is { } child) return child;
+
+        var newChild = new XElement(name);
+        element.Add(newChild);
+        return newChild;
+    }
+
+    public static XElement ElementMust(this XElement element, string name) => element.Element(name) ??
+                                                                              throw new Exception(
+                                                                                  $"Element '{element.Name}' contains no '{name}' child");
+
+    public static XAttribute AttributeMust(this XElement element, string name) => element.Attribute(name) ??
+        throw new Exception(
+            $"Element '{element.Name}' contains no '{name}' child");
 }
