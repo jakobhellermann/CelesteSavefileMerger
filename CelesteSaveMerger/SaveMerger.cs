@@ -10,7 +10,7 @@ public static class SaveMerger {
         "Name",
         new MergeByRules([
             ("Areas", new MergeAreas()),
-            // todo poem
+            ("Poem", MergeFlags.ByChildren),
             ("UnlockedAreas", MergeLong.Max),
             ("TotalStrawberries", new MergeFixed("0")),
         ]));
@@ -32,8 +32,8 @@ public static class SaveMerger {
         ("TotalJumps", MergeLong.Sum),
         ("TotalWallJumps", MergeLong.Sum),
         ("TotalDashes", MergeLong.Sum),
-        ("Flags", new MergeFlags(elem => elem.Value)),
-        // todo poem,
+        ("Flags", MergeFlags.ByChildren),
+        ("Poem", MergeFlags.ByChildren),
         ("SummitGems", new MergeChildrenOrdered(new MergeBoolTowardsTrue())),
         ("RevealedChapter9", new MergeBoolTowardsTrue()),
         // todo lastarea, currentsession, oldstats
