@@ -15,5 +15,5 @@ public struct Savefile {
 public interface ISavefileService {
     IEnumerable<Savefile> List();
 
-    Task<string?> Save(string text, string suggestedFilename);
+    Task<string?> Save(string text, string? directoryName, string suggestedFilename);
 }

@@ -1,19 +1,70 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Avalonia.Platform.Storage;
+using Microsoft.Win32;
 
 namespace SaveMerger.Services;
 
 public class SavefileService : ISavefileService {
     public IStorageProvider? StorageProvider;
 
-    private const string CelesteSaveDir = @"C:\Program Files (x86)\Steam\steamapps\common\Celeste\Saves";
+    // https://github.com/fifty-six/Scarab/blob/68b11ee8596fbfe1ea31e420d49190181788a8a6/Scarab/Settings.cs#L26-L50
+
+    private static readonly string[] Paths = new[] {
+        "Program Files (x86)/Steam/steamapps/common/Celeste",
+        "Program Files/Steam/steamapps/common/Celeste",
+        "Steam/steamapps/common/Celeste",
+    }.SelectMany(path => DriveInfo.GetDrives().Select(d => Path.Combine(d.Name, path))).ToArray();
+
+    private static readonly string[] UserPaths = [
+        // Default locations on linux
+        ".local/share/Steam/steamapps/common/Celeste",
+        ".steam/steam/steamapps/common/Celeste",
+        // Flatpak
+        ".var/app/com.valvesoftware.Steam/data/Steam/steamapps/common/Celeste",
+        // Symlinks to the Steam root on linux
+        ".steam/root/steamapps/common/Celeste",
+        // Default for macOS
+        "Library/Application Support/Steam/steamapps/common/Celeste/celeste.app",
+        "Library/Application Support/Celeste",
+    ];
+
+
+    private static string? GetSteamCelesteDir() {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return null;
+
+        var steamInstallKey =
+            Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam", "InstallPath", null);
+        if (steamInstallKey is not string path) return null;
+
+        return Path.Combine(path, "steamapps/common/celeste");
+    }
+
+    private static bool IsCelesteAtPath(string path) =>
+        Path.Exists(Path.Combine(path, "Celeste.exe")) && Path.Exists(Path.Combine(path, "Saves"));
+
+    private static string? FindCelesteDir() {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var probablePaths = Paths
+            .Concat(UserPaths.Select(path => Path.Combine(home, path)));
+        if (probablePaths.FirstOrDefault(IsCelesteAtPath) is { } celesteDir) {
+            return celesteDir;
+        }
+
+        if (GetSteamCelesteDir() is { } dir && IsCelesteAtPath(dir)) return dir;
+
+        return null;
+    }
 
     public IEnumerable<Savefile> List() {
-        return Directory.GetFiles(CelesteSaveDir)
+        if (FindCelesteDir() is not { } celesteDir) return ArraySegment<Savefile>.Empty;
+
+        return Directory.GetFiles(Path.Combine(celesteDir, "Saves"))
             .Where(file => Path.GetExtension(file) == ".celeste")
             .Select<string, Savefile?>(file => {
                 if (!int.TryParse(Path.GetFileNameWithoutExtension(file), out var index)) return null;
@@ -33,10 +84,12 @@ public class SavefileService : ISavefileService {
             .OrderBy(savefile => savefile.Index);
     }
 
-    public async Task<string?> Save(string text, string suggestedFilename) {
+    public async Task<string?> Save(string text, string? directoryName, string? suggestedFilename) {
         if (StorageProvider is null) return null;
 
-        var startLocation = await StorageProvider.TryGetFolderFromPathAsync(CelesteSaveDir);
+        var startLocation = directoryName is not null
+            ? await StorageProvider.TryGetFolderFromPathAsync(directoryName)
+            : null;
 
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
             Title = "Save Savefile",

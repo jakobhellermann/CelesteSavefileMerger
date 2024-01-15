@@ -22,5 +22,6 @@ public class DummySavefileService : ISavefileService {
         },
     ];
 
-    public Task<string?> Save(string text, string suggestedFilename) => Task.FromResult<string?>(null);
+    public Task<string?> Save(string text, string? directory, string? suggestedFilename) =>
+        Task.FromResult<string?>(null);
 }
