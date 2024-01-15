@@ -499,7 +499,8 @@ internal class MergeAreas : IMergeElement {
                     .ToArray();
 
                 var contextPath = mergeContext.Path;
-                mergeContext.Path = "todo";
+                mergeContext.Path =
+                    "not yet implemented"; // the path can't refer to a child with a particular attribute yet, but areamodestats have nothing to resolve anyways
                 var newModeI = new XElement("AreaModeStats");
                 SaveMerger.MergeAreaModeStats.Merge(newModeI, mode, mergeContext);
                 mergeContext.Path = contextPath;
