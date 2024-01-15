@@ -168,7 +168,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     public async void Save() {
         var text = MergedXml!;
 
-        var directoryName = Path.GetDirectoryName(Selection.SelectedItem.Path);
+        var directoryName = Path.GetDirectoryName(Selection.SelectedItem!.Path);
         var joined = string.Join('+', Selection.SelectedItems.Select(savefile => savefile.Index));
         var path = await _savefileService.Save(text, directoryName, joined + ".celeste");
         if (path is null) return;
@@ -200,7 +200,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     }
 
     public MainWindowViewModel() : this(new DummySavefileService()) {
-        TabIndex = TabIndex.Merge;
+        TabIndex = TabIndex.Save;
 
         Resolutions.Add(new Resolution { Path = "Name", Values = "Madeline, Archie", Kind = ResolutionKind.String });
         Resolutions.Add(new Resolution { Path = "AssistMode", Values = "true, false", Kind = ResolutionKind.Bool });

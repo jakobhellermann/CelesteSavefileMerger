@@ -6,10 +6,10 @@ namespace SaveMerger.Services;
 
 public class Savefile {
     public int Index { get; init; }
-    public string Path { get; init; }
-    public string PlayerName { get; set; }
-    public string Details { get; set; }
-    public XDocument Document;
+    public required string Path { get; init; }
+    public required string PlayerName { get; set; }
+    public string Details { get; set; } = "";
+    public required XDocument Document;
 }
 
 public interface ISavefileService {
