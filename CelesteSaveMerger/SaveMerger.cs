@@ -79,6 +79,21 @@ public static class SaveMerger {
         { "Celeste/LostLevels", [["a-00:449"], [], []] },
     };
 
+    // ReSharper disable once InconsistentNaming
+    private static readonly string[] VanillaSIDs = [
+        "Celeste/0-Intro",
+        "Celeste/1-ForsakenCity",
+        "Celeste/2-OldSite",
+        "Celeste/3-CelestialResort",
+        "Celeste/4-GoldenRidge",
+        "Celeste/5-MirrorTemple",
+        "Celeste/6-Reflection",
+        "Celeste/7-Summit",
+        "Celeste/8-Epilogue",
+        "Celeste/9-Core",
+        "Celeste/LostLevels",
+    ];
+
     public static (XDocument, List<PendingResolution>, List<string>) Merge(IEnumerable<XDocument> saves) {
         var mergedDocument = new XDocument();
 
@@ -125,10 +140,19 @@ public static class SaveMerger {
 
     public static IEnumerable<XElement> AllLevelSets(XElement save) {
         return save
-            .ElementMust("LevelSets").Elements("LevelSetStats")
+            .Elements("LevelSets").Elements("LevelSetStats")
             .Where(stats => stats.Attribute("Name")?.Value != "Celeste")
-            .Concat(save.ElementMust("LevelSetRecycleBin").Elements("LevelSetStats"))
+            .Concat(save.Elements("LevelSetRecycleBin").Elements("LevelSetStats"))
             .Concat([save]);
+    }
+
+    internal static string SidVanillaFallback(XElement element) {
+        if (element.Attribute("SID")?.Value is { } sid) return sid;
+
+        var id = int.Parse(element.AttributeMust("ID").Value);
+        if (id < VanillaSIDs.Length) return VanillaSIDs[id];
+
+        throw new Exception("Element has neither SID, nor ID in vanilla range");
     }
 
     private static int CountVanillaGoldens(XElement saveFile) {
@@ -139,7 +163,7 @@ public static class SaveMerger {
             .Elements("AreaStats");
 
         foreach (var areaStat in areaStats) {
-            var sid = areaStat.AttributeMust("SID").Value;
+            var sid = SidVanillaFallback(areaStat);
 
             var modes = areaStat.ElementMust("Modes").Elements("AreaModeStats").ToArray();
             if (modes.Length != 3) throw new Exception($"{sid} had {modes.Length} modes instead of 3");
@@ -447,12 +471,12 @@ internal class MergeAreas : IMergeElement {
         var allArray = all.ToArray();
 
         var sids = allArray.SelectMany(areas =>
-                areas.Elements("AreaStats").Select(stats => stats.Attribute("SID")?.Value.ToString()).OfType<string>())
+                areas.Elements("AreaStats").Select(SaveMerger.SidVanillaFallback))
             .Distinct();
 
         foreach (var sid in sids) {
             var allOfSid = allArray.SelectMany(areas => {
-                return areas.Elements().Where(stats => stats.Attribute("SID")?.Value == sid);
+                return areas.Elements().Where(stats => SaveMerger.SidVanillaFallback(stats) == sid);
             }).ToArray();
 
             var cassette = allOfSid
