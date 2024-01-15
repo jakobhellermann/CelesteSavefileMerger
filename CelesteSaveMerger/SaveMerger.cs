@@ -57,10 +57,10 @@ public static class SaveMerger {
             ("FullClear", new MergeBoolTowardsTrue()),
             ("Deaths", MergeLong.Sum),
             ("TimePlayed", MergeLong.Sum),
-            ("BestTime", MergeLong.Min),
-            ("BestFullClearTime", MergeLong.Min),
-            ("BestDashes", MergeLong.Min),
-            ("BestDeaths", MergeLong.Min),
+            ("BestTime", MergeLong.MinExcludingZero),
+            ("BestFullClearTime", MergeLong.MinExcludingZero),
+            ("BestDashes", MergeLong.MinExcludingZero),
+            ("BestDeaths", MergeLong.MinExcludingZero),
             ("HeartGem", new MergeBoolTowardsTrue()),
         ]
     );
@@ -431,8 +431,16 @@ internal class MergeBoolTowardsTrue : SimpleMergeHelper {
 
 internal class MergeLong(long initial, Func<long, long, long> reduce) : SimpleMergeHelper {
     public static readonly MergeLong Min = new(long.MaxValue, Math.Min);
-    public static readonly MergeLong Max = new(long.MaxValue, Math.Min);
+    public static readonly MergeLong Max = new(long.MinValue, Math.Max);
     public static readonly MergeLong Sum = new(0, (a, b) => a + b);
+
+    public static readonly MergeLong MinExcludingZero = new(0,
+        (a, b) => {
+            if (b == 0) return a;
+            if (a == 0) return b;
+
+            return Math.Min(a, b);
+        });
 
     protected override string? MergeInternal(IEnumerable<string> elements, MergeContext mergeContext) {
         var accumulator = initial;
@@ -494,7 +502,7 @@ internal class MergeAreas : IMergeElement {
                 .Distinct();
 
             var newAreaStats = new XElement("AreaStats",
-                new XAttribute("ID", "todo id"), // TODO
+                new XAttribute("ID", "0"),
                 new XAttribute("Cassette", cassette),
                 new XAttribute("SID", sid));
 
