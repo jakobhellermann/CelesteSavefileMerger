@@ -16,15 +16,29 @@ public static class SaveMerger {
         ]));
 
     private static readonly MergeByRules MergeSaveData = new([
-        ("Version", new MergeSame()),
-        ("Name", new MergeSame()),
+        ("Version", new MergeSame(ResolutionKind.Unknown)),
+        ("Name", MergeSame.String),
         ("Time", MergeLong.Sum),
-        ("LastSave", new MergeSame()),
-        ("CheatMode", new MergeSame()),
-        ("AssistMode", new MergeSame()),
-        ("VariantMode", new MergeSame()),
-        ("Assists", new MergeSameChildren()),
-        ("TheoSisterName", new MergeSame()),
+        ("LastSave", MergeSame.Bool),
+        ("CheatMode", MergeSame.Bool),
+        ("AssistMode", MergeSame.Bool),
+        ("VariantMode", MergeSame.Bool),
+        ("Assists", new MergeByRules([
+            ("GameSpeed", MergeSame.Int),
+            ("Invincible", MergeSame.Bool),
+            ("DashMode", MergeSame.String),
+            ("DashAssist", MergeSame.Bool),
+            ("InfiniteStamina", MergeSame.Bool),
+            ("MirrorMode", MergeSame.Bool),
+            ("ThreeSixtyDashing", MergeSame.Bool),
+            ("InvisibleMotion", MergeSame.Bool),
+            ("NoGrabbing", MergeSame.Bool),
+            ("LowFriction", MergeSame.Bool),
+            ("SuperDashing", MergeSame.Bool),
+            ("Hiccups", MergeSame.Bool),
+            ("PlayAsBadeline", MergeSame.Bool),
+        ])),
+        ("TheoSisterName", MergeSame.String),
         ("UnlockedAreas", MergeLong.Max),
         ("TotalDeaths", MergeLong.Sum),
         ("TotalStrawberries", new MergeFixed("0")),
@@ -315,19 +329,6 @@ internal interface IMergeAttribute {
     string? Merge(IEnumerable<string> values, MergeContext mergeContext);
 }
 
-internal class MergeChildFlags(string childTag) : IMergeElement {
-    public void Merge(XElement into, IEnumerable<XElement> elements, MergeContext mergeContext) {
-        var flags = elements.SelectMany(element => element.Elements(childTag))
-            .Select(element => element.Value)
-            .Distinct()
-            .Select(element => new XElement(childTag, element));
-
-        foreach (var flag in flags) {
-            into.Add(flag);
-        }
-    }
-}
-
 internal class MergeFlags(Func<XElement, string> distinctBy) : IMergeElement {
     public static MergeFlags ByChildren = new(element => element.Value);
     public static MergeFlags ByAttribute(string attribute) => new(element => element.AttributeMust(attribute).Value);
@@ -343,7 +344,11 @@ internal class MergeFlags(Func<XElement, string> distinctBy) : IMergeElement {
     }
 }
 
-internal class MergeSame : IMergeElement {
+internal class MergeSame(ResolutionKind resolutionKind) : IMergeElement {
+    internal static MergeSame Bool = new(ResolutionKind.Bool);
+    internal static MergeSame String = new(ResolutionKind.String);
+    internal static MergeSame Int = new(ResolutionKind.Integer);
+
     public void Merge(XElement into, IEnumerable<XElement> elements, MergeContext mergeContext) {
         var allSame = true;
 
@@ -365,7 +370,7 @@ internal class MergeSame : IMergeElement {
             into.Value = last;
         } else {
             into.Value = SaveMerger.PendingResolution;
-            mergeContext.EmitResolution(allValues.ToArray(), ResolutionKind.Unknown);
+            mergeContext.EmitResolution(allValues.ToArray(), resolutionKind);
         }
     }
 }

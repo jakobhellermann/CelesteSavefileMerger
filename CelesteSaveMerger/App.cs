@@ -19,7 +19,8 @@ public class App {
             Console.WriteLine(writer.ToString());
 
             foreach (var resolution in resolutions) {
-                Console.WriteLine($"Resolution: {resolution.Path} from '{string.Join(",", resolution.Values)}'");
+                Console.WriteLine(
+                    $"Resolution: {resolution.Path} from '{string.Join(",", resolution.Values)}' ({resolution.Kind})");
             }
 
             foreach (var error in errors) {
