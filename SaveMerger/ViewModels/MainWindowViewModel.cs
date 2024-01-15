@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Avalonia.Controls.Selection;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,6 +24,8 @@ public partial class Resolution : ObservableObject {
 }
 
 public partial class MainWindowViewModel : ViewModelBase {
+    #region State
+
     [NotifyPropertyChangedFor(nameof(TabMergeEnabled), nameof(TabSaveEnabled))] [ObservableProperty]
     private TabIndex _tabIndex = TabIndex.Select;
 
@@ -44,11 +47,47 @@ public partial class MainWindowViewModel : ViewModelBase {
     // Save Tab
     [ObservableProperty] private string? _mergedXml;
 
-    // Services
-    private readonly ISavefileService _savefileService;
+    #endregion
 
+    #region Commands
 
-    // Commands
+    public async void SelectFiles() {
+        Error = "";
+
+        var additionalFiles = await _savefileService.OpenMany();
+
+        var noneAdded = true;
+        foreach (var newSavefile in additionalFiles) {
+            noneAdded = false;
+
+            var alreadyAdded = Savefiles.FirstOrDefault(savefile =>
+                Path.GetFullPath(savefile.Path) == Path.GetFullPath(newSavefile.Path));
+            if (alreadyAdded is not null) {
+                alreadyAdded.Document = newSavefile.Document;
+                alreadyAdded.PlayerName = newSavefile.PlayerName;
+                alreadyAdded.Details = newSavefile.Details;
+                continue;
+            }
+
+            Savefiles.Add(newSavefile);
+        }
+
+        if (noneAdded) Error = "No new savefiles added";
+    }
+
+    public void RemoveSelected() {
+        foreach (var toRemove in Selection.SelectedIndexes.OrderDescending()) {
+            Savefiles.RemoveAt(toRemove);
+        }
+
+        Selection.Clear();
+    }
+
+    public void LoadSavefiles() {
+        Savefiles = new ObservableCollection<Savefile>(_savefileService.List());
+        OnPropertyChanged(nameof(Savefiles));
+    }
+
     public void Merge() {
         Error = "";
 
@@ -105,9 +144,11 @@ public partial class MainWindowViewModel : ViewModelBase {
         await proc.WaitForExitAsync();
     }
 
-    private void LoadSavefiles() {
-        Savefiles = new ObservableCollection<Savefile>(_savefileService.List());
-    }
+    #endregion
+
+    // Services
+    private readonly ISavefileService _savefileService;
+
 
     // Construtor
     public MainWindowViewModel(ISavefileService savefileService) {
@@ -124,7 +165,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     }
 
     public MainWindowViewModel() : this(new DummySavefileService()) {
-        TabIndex = TabIndex.Save;
+        TabIndex = TabIndex.Select;
 
         Resolutions.Add(new Resolution { Path = "Name", Values = "Madeline, Archie" });
         Resolutions.Add(new Resolution { Path = "AssistMode", Values = "true, false" });

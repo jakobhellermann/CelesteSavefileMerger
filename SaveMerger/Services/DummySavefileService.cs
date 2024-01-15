@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SaveMerger.Services;
@@ -24,4 +25,7 @@ public class DummySavefileService : ISavefileService {
 
     public Task<string?> Save(string text, string? directory, string? suggestedFilename) =>
         Task.FromResult<string?>(null);
+
+    public Task<IEnumerable<Savefile>> OpenMany() =>
+        Task.FromResult(ArraySegment<Savefile>.Empty as IEnumerable<Savefile>);
 }

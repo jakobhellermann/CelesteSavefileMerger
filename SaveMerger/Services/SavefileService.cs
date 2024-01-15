@@ -15,6 +15,8 @@ public class SavefileService : ISavefileService {
 
     // https://github.com/fifty-six/Scarab/blob/68b11ee8596fbfe1ea31e420d49190181788a8a6/Scarab/Settings.cs#L26-L50
 
+    private string? _celesteDir = null;
+
     private static readonly string[] Paths = new[] {
         "Program Files (x86)/Steam/steamapps/common/Celeste",
         "Program Files/Steam/steamapps/common/Celeste",
@@ -62,26 +64,49 @@ public class SavefileService : ISavefileService {
     }
 
     public IEnumerable<Savefile> List() {
-        if (FindCelesteDir() is not { } celesteDir) return ArraySegment<Savefile>.Empty;
+        if (FindCelesteDir() is not { } dir) return ArraySegment<Savefile>.Empty;
 
-        return Directory.GetFiles(Path.Combine(celesteDir, "Saves"))
+        _celesteDir = dir;
+
+        return Directory.GetFiles(Path.Combine(_celesteDir, "Saves"))
             .Where(file => Path.GetExtension(file) == ".celeste")
-            .Select<string, Savefile?>(file => {
-                if (!int.TryParse(Path.GetFileNameWithoutExtension(file), out var index)) return null;
-
-                var doc = XDocument.Load(File.OpenRead(file));
-                var (playerName, details) = ExtractDetails(doc);
-
-                return new Savefile {
-                    Index = index,
-                    Path = file,
-                    Details = details,
-                    PlayerName = playerName,
-                    Document = doc,
-                };
-            })
+            .Select(ReadSavefile)
             .OfType<Savefile>()
             .OrderBy(savefile => savefile.Index);
+    }
+
+    private static Savefile? ReadSavefile(string file) {
+        if (!int.TryParse(Path.GetFileNameWithoutExtension(file), out var index)) return null;
+
+        var doc = XDocument.Load(File.OpenRead(file));
+        var (playerName, details) = ExtractDetails(doc);
+
+        return new Savefile {
+            Index = index,
+            Path = file,
+            Details = details,
+            PlayerName = playerName,
+            Document = doc,
+        };
+    }
+
+    public async Task<IEnumerable<Savefile>> OpenMany() {
+        if (StorageProvider is null) return [];
+
+        var startLocation = _celesteDir is not null
+            ? await StorageProvider.TryGetFolderFromPathAsync(Path.Join(_celesteDir, "Saves"))
+            : null;
+
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+            Title = "Open Savefiles",
+            SuggestedStartLocation = startLocation,
+            AllowMultiple = true,
+            FileTypeFilter = [new FilePickerFileType("celeste") { Patterns = ["*.celeste"] }],
+        });
+        return files
+            .Select(file => file.TryGetLocalPath()).OfType<string>()
+            .Select(ReadSavefile)
+            .OfType<Savefile>();
     }
 
     public async Task<string?> Save(string text, string? directoryName, string? suggestedFilename) {
