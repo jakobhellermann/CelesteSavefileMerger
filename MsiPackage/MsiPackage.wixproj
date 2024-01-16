@@ -1,0 +1,13 @@
+﻿<Project Sdk="WixToolset.Sdk/4.0.3">
+    <ItemGroup>
+        <ProjectReference Include="..\SaveMerger\SaveMerger.csproj"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <OutputName>CelesteSaveMerger</OutputName>
+    </PropertyGroup>
+
+    <!--    <Target Name="Publish App" BeforeTargets="BeforeBuild">-->
+    <!--        <Exec Command="dotnet publish ../SaveMerger -c $(Configuration) -r win-x64"/>-->
+    <!--    </Target>-->
+</Project>

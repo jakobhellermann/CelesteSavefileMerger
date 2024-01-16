@@ -1,0 +1,16 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Package Name="CelesteSaveMerger" Manufacturer="JJ" Version="1.0.0.0"
+             UpgradeCode="22ede8a7-0357-4fd0-a354-829aa0aa282d">
+        <MediaTemplate EmbedCab="true"/>
+
+        <Icon Id="icon.ico" SourceFile="../SaveMerger/Assets/icon.ico"/>
+
+        <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)"/>
+
+        <Feature Id="Main">
+            <ComponentGroupRef Id="ExampleComponents"/>
+
+        </Feature>
+
+    </Package>
+</Wix>
