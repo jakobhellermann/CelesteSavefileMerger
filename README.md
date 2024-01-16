@@ -13,7 +13,17 @@
 ![save screen](./docs/save.png)
 
 ## Development
-**Build Command**
+
+**Build Program**
+
 ```sh
 dotnet publish -o out
+```
+
+**Build Installer**
+
+```sh
+dotnet publish SaveMerger
+dotnet build MsiPackage --configuration Release
+ls MsiPackage/bin/Release/en-US/CelesteSaveMerger.msi
 ```
