@@ -27,7 +27,9 @@ public class DummySavefileService : ISavefileService {
         },
     ];
 
-    public Task<string?> Save(string text, string? directory, string? suggestedFilename) =>
+    public Task<string?> SaveFirstFreeSaveSlot(string content) => Task.FromResult((string?)null);
+
+    public Task<string?> SaveViaPicker(string text, string? directory, string? suggestedFilename) =>
         Task.FromResult<string?>(null);
 
     public Task<IEnumerable<Savefile>> OpenMany() =>

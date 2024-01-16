@@ -3,7 +3,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 using System.Xml.Linq;
 using Avalonia.Controls.Selection;
 using Avalonia.Data;
@@ -67,7 +69,10 @@ public partial class MainWindowViewModel : ViewModelBase {
 
     // Select Tab
     public ObservableCollection<Savefile> Savefiles { get; private set; } = [];
+
+    // when not in Select Tab, there is always something selected
     public SelectionModel<Savefile> Selection { get; } = new();
+
     public bool EnoughSelectedToMerge => Selection.Count >= 1;
 
     // Merge Tab
@@ -77,6 +82,9 @@ public partial class MainWindowViewModel : ViewModelBase {
 
     // Save Tab
     [ObservableProperty] private string? _mergedXml;
+    [ObservableProperty] private string? _successText;
+
+    private string? _savedFilename;
 
     #endregion
 
@@ -121,9 +129,10 @@ public partial class MainWindowViewModel : ViewModelBase {
 
     public void Merge() {
         Error = "";
+        _savedFilename = null;
 
         TryError(() => {
-            var saves = Selection.SelectedItems.Select(savefile => savefile.Document);
+            var saves = Selection.SelectedItems.Select(savefile => savefile!.Document);
             var (result, resolutions, errors) = SaveMerger.SaveMerger.Merge(saves);
             _document = result;
 
@@ -148,6 +157,7 @@ public partial class MainWindowViewModel : ViewModelBase {
     }
 
     public void Resolve() {
+        SuccessText = "";
         Error = "";
 
         TryError(() => {
@@ -162,18 +172,43 @@ public partial class MainWindowViewModel : ViewModelBase {
         });
     }
 
-    public async void Save() {
+    public async void SaveNewSlot() {
+        var text = MergedXml!;
+        _savedFilename = await _savefileService.SaveFirstFreeSaveSlot(text);
+        SuccessText = "Saved as " + _savedFilename;
+
+        if (_savedFilename is null) Error = "Could not save file";
+    }
+
+    public async void SaveAs() {
         var text = MergedXml!;
 
         var directoryName = Path.GetDirectoryName(Selection.SelectedItem!.Path);
-        var joined = string.Join('+', Selection.SelectedItems.Select(savefile => savefile.Index));
-        var path = await _savefileService.Save(text, directoryName, joined + ".celeste");
-        if (path is null) return;
+        var joined = string.Join('+', Selection.SelectedItems.Select(savefile => savefile!.Index));
+        _savedFilename = await _savefileService.SaveViaPicker(text, directoryName, joined + ".celeste");
+        SuccessText = "Saved as " + _savedFilename;
 
-        var proc = new Process();
-        proc.StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = path };
-        proc.Start();
-        await proc.WaitForExitAsync();
+        if (_savedFilename is null) Error = "Could not save file";
+    }
+
+    public async void OpenInTextEditor() {
+        var filePath = _savedFilename;
+
+        if (filePath is null) {
+            filePath = Path.Combine(Path.GetTempPath(), "newsave.celeste");
+            await File.WriteAllTextAsync(filePath, MergedXml);
+        }
+
+        TryError(() => {
+            try {
+                var proc = new Process();
+                proc.StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = filePath };
+                proc.Start();
+                proc.WaitForExit();
+            } catch (Exception) {
+                Process.Start("notepad.exe", filePath);
+            }
+        });
     }
 
     #endregion

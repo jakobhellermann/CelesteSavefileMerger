@@ -75,6 +75,20 @@ public class SavefileService : ISavefileService {
             .OrderBy(savefile => savefile.Index);
     }
 
+    public async Task<string?> SaveFirstFreeSaveSlot(string content) {
+        if (_celesteDir is null) return null;
+
+        var path = Enumerable.Range(0, 10000)
+            .Select(index => Path.Join(_celesteDir, "Saves", $"{index}.celeste"))
+            .First(path => !Path.Exists(path));
+
+        await using var fileStream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+        await using var writer = new StreamWriter(fileStream);
+        await writer.WriteAsync(content);
+
+        return path;
+    }
+
     private static Savefile? ReadSavefile(string file) {
         if (!int.TryParse(Path.GetFileNameWithoutExtension(file), out var index)) return null;
 
@@ -109,7 +123,7 @@ public class SavefileService : ISavefileService {
             .OfType<Savefile>();
     }
 
-    public async Task<string?> Save(string text, string? directoryName, string? suggestedFilename) {
+    public async Task<string?> SaveViaPicker(string text, string? directoryName, string? suggestedFilename) {
         if (StorageProvider is null) return null;
 
         var startLocation = directoryName is not null

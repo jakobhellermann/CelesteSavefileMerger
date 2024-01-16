@@ -15,7 +15,9 @@ public class Savefile {
 public interface ISavefileService {
     IEnumerable<Savefile> List();
 
-    Task<string?> Save(string text, string? directoryName, string suggestedFilename);
+    Task<string?> SaveFirstFreeSaveSlot(string content);
+
+    Task<string?> SaveViaPicker(string text, string? directoryName, string suggestedFilename);
 
     Task<IEnumerable<Savefile>> OpenMany();
 }
