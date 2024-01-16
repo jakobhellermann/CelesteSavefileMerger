@@ -32,4 +32,3 @@ jobs:
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "CelesteSaveMerger.zip,MsiPackage/bin/Release/en-US/CelesteSaveMerger.msi"
-        tag: "{{ github.event.inputs }}"
