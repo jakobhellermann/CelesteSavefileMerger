@@ -7,7 +7,6 @@
                               Icon="icon.ico">
                     </Shortcut>
                 </File>
-                <File Source="./win-x64/publish/SaveMerger.pdb"/>
             </Component>
             <Component>
                 <File Source="./win-x64/publish/av_libglesv2.dll"/>
