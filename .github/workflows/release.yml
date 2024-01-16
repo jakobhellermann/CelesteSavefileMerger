@@ -1,0 +1,34 @@
+name: Make Release
+
+on:
+    workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Release Tag'     
+          required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build App
+      run: dotnet publish SaveMerger
+    - name: Build Installer
+      run: dotnet build MsiPackage --Configuration Release
+    - uses: vimtor/action-zip@v1.1
+      with:
+        files: SaveMerger/bin/Release/net8.0/win-x64/publish
+        recursive: true
+        dest: CelesteSaveMerger.zip
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "CelesteSaveMerger.zip,MsiPackage/bin/Release/en-US/CelesteSaveMerger.msi"
+        tag: "{{ github.event.inputs }}"
