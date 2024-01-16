@@ -22,7 +22,7 @@ jobs:
     - name: Build App
       run: dotnet publish SaveMerger
     - name: Build Installer
-      run: dotnet build MsiPackage --Configuration Release
+      run: dotnet build MsiPackage --configuration Release
     - uses: vimtor/action-zip@v1.1
       with:
         files: SaveMerger/bin/Release/net8.0/win-x64/publish
