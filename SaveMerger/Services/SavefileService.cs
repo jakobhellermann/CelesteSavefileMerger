@@ -15,7 +15,7 @@ public class SavefileService : ISavefileService {
 
     // https://github.com/fifty-six/Scarab/blob/68b11ee8596fbfe1ea31e420d49190181788a8a6/Scarab/Settings.cs#L26-L50
 
-    private string? _celesteDir = null;
+    private string? _celesteSaveDir = null;
 
     private static readonly string[] Paths = new[] {
         "Program Files (x86)/Steam/steamapps/common/Celeste",
@@ -25,12 +25,7 @@ public class SavefileService : ISavefileService {
 
     private static readonly string[] UserPaths = [
         // Default locations on linux
-        ".local/share/Steam/steamapps/common/Celeste",
-        ".steam/steam/steamapps/common/Celeste",
-        // Flatpak
-        ".var/app/com.valvesoftware.Steam/data/Steam/steamapps/common/Celeste",
-        // Symlinks to the Steam root on linux
-        ".steam/root/steamapps/common/Celeste",
+        ".local/share/Celeste/",
         // Default for macOS
         "Library/Application Support/Steam/steamapps/common/Celeste/celeste.app",
         "Library/Application Support/Celeste",
@@ -47,8 +42,7 @@ public class SavefileService : ISavefileService {
         return Path.Combine(path, "steamapps/common/celeste");
     }
 
-    private static bool IsCelesteAtPath(string path) =>
-        Path.Exists(Path.Combine(path, "Celeste.exe")) && Path.Exists(Path.Combine(path, "Saves"));
+    private static bool IsCelesteAtPath(string path) => Path.Exists(Path.Combine(path, "Saves"));
 
     private static string? FindCelesteDir() {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -66,9 +60,9 @@ public class SavefileService : ISavefileService {
     public IEnumerable<Savefile> List() {
         if (FindCelesteDir() is not { } dir) return ArraySegment<Savefile>.Empty;
 
-        _celesteDir = dir;
+        _celesteSaveDir = Path.Combine(dir,"Saves");
 
-        return Directory.GetFiles(Path.Combine(_celesteDir, "Saves"))
+        return Directory.GetFiles(_celesteSaveDir)
             .Where(file => Path.GetExtension(file) == ".celeste")
             .Select(ReadSavefile)
             .OfType<Savefile>()
@@ -76,10 +70,10 @@ public class SavefileService : ISavefileService {
     }
 
     public async Task<string?> SaveFirstFreeSaveSlot(string content) {
-        if (_celesteDir is null) return null;
+        if (_celesteSaveDir is null) return null;
 
         var path = Enumerable.Range(0, 10000)
-            .Select(index => Path.Join(_celesteDir, "Saves", $"{index}.celeste"))
+            .Select(index => Path.Join(_celesteSaveDir,  $"{index}.celeste"))
             .First(path => !Path.Exists(path));
 
         await using var fileStream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
@@ -107,8 +101,8 @@ public class SavefileService : ISavefileService {
     public async Task<IEnumerable<Savefile>> OpenMany() {
         if (StorageProvider is null) return [];
 
-        var startLocation = _celesteDir is not null
-            ? await StorageProvider.TryGetFolderFromPathAsync(Path.Join(_celesteDir, "Saves"))
+        var startLocation = _celesteSaveDir is not null
+            ? await StorageProvider.TryGetFolderFromPathAsync(_celesteSaveDir)
             : null;
 
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
