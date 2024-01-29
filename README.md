@@ -5,6 +5,7 @@
 <br clear="left" />
 <br />
 
+![GitHub Release](https://img.shields.io/github/v/release/jakobhellermann/CelesteSavefileMerger?label=Download&link=https%3A%2F%2Fgithub.com%2Fjakobhellermann%2FCelesteSavefileMerger%2Freleases%2F)
 
 ## Usage
 
