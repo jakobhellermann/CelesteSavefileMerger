@@ -1,0 +1,27 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SaveMerger.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SaveMerger.Views.TabSave"
+             x:DataType="viewModels:MainWindowViewModel">
+    <StackPanel>
+        <TextBlock FontSize="22">Note:</TextBlock>
+        <TextBlock TextWrapping="Wrap" xml:space="preserve">The following things are not merged and will not be included in the savefile:
+- Save &amp; Quit State
+- Any *-modsave files:
+  This includes things like speedberry times or whether a lobby heart gate was opened.
+- That's it but maybe I forgot something important to make sure everyhing looks alright.
+                        </TextBlock>
+
+        <StackPanel Orientation="Vertical" Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Command="{Binding SaveNewSlot}">Save in new slot</Button>
+                <Button Command="{Binding SaveAs}">Save As</Button>
+                <Button Command="{Binding OpenInTextEditor}">Open in Text Editor</Button>
+            </StackPanel>
+            <TextBlock Text="{Binding SuccessText}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

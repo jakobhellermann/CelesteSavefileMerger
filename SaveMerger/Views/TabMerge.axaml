@@ -1,0 +1,37 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SaveMerger.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SaveMerger.Views.TabMerge"
+             x:DataType="viewModels:MainWindowViewModel">
+    <Design.DataContext>
+        <viewModels:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,8,Auto,8,Auto">
+        <TextBlock IsVisible="{Binding !Resolutions.Count}">No conflicts found.</TextBlock>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
+            <ItemsControl ItemsSource="{Binding Resolutions}" Grid.IsSharedSizeScope="True">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0 0 0 8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="B" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding Path}"
+                                       VerticalAlignment="Center" />
+                            <TextBox Grid.Column="2" Text="{Binding NewText}"
+                                     Watermark="{Binding Values}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        <Button Grid.Row="4" Content="{Binding ResolveButtonLabel}"
+                IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}" />
+    </Grid>
+</UserControl>

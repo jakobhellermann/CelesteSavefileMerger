@@ -1,0 +1,53 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SaveMerger.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SaveMerger.Views.TabSelect"
+             x:DataType="viewModels:MainWindowViewModel">
+    <Design.DataContext>
+        <viewModels:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid VerticalAlignment="Top" RowDefinitions="* 8 auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="0">
+            <ListBox VerticalAlignment="Center" SelectionMode="Multiple,Toggle"
+                     ItemsSource="{Binding Savefiles}"
+                     Selection="{Binding Selection}"
+                     Background="Transparent"
+                     Grid.IsSharedSizeScope="True">
+                <ListBox.KeyBindings>
+                    <KeyBinding Gesture="Delete" Command="{Binding RemoveSelected}" />
+                </ListBox.KeyBindings>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding Index}"
+                                       Margin="8 0" HorizontalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding PlayerName}"
+                                       FontWeight="SemiBold"
+                                       Margin="8 0" />
+                            <TextBlock Grid.Column="2" Text="{Binding Details}"
+                                       TextTrimming="WordEllipsis" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+            <Button IsEnabled="{Binding EnoughSelectedToMerge}" Command="{Binding Merge}">Merge</Button>
+            <Button Command="{Binding SelectFiles}" HotKey="Ctrl+O">
+                <Image Source="{SvgImage /Assets/Images/folder-solid.svg}" />
+            </Button>
+            <Button Command="{Binding LoadSavefiles}" HotKey="Ctrl+R">
+                <Image Source="{SvgImage /Assets/Images/rotate-right-solid.svg}" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,16 +1,21 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:SaveMerger.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="using:SaveMerger.ViewModels"
+        xmlns:views="clr-namespace:SaveMerger.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SaveMerger.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
+        x:DataType="viewModels:MainWindowViewModel"
         Icon="/Assets/icon.ico"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
         Title="SaveMerger">
+    <Design.DataContext>
+        <viewModels:MainWindowViewModel />
+    </Design.DataContext>
+
     <Window.Styles>
         <Style Selector="Button">
             <Setter Property="Padding" Value="16 8" />
@@ -31,9 +36,6 @@
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Design.DataContext>
-        <vm:MainWindowViewModel />
-    </Design.DataContext>
 
     <Panel>
         <ExperimentalAcrylicBorder IsHitTestVisible="False">
@@ -50,97 +52,14 @@
             <TextBlock DockPanel.Dock="Bottom" Margin="8" Text="{Binding Error}" Foreground="Red" />
 
             <TabControl TabStripPlacement="Left" SelectedIndex="{Binding TabIndex}">
-                <TabControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel HorizontalAlignment="Right" />
-                    </ItemsPanelTemplate>
-                </TabControl.ItemsPanel>
                 <TabItem Header="Select">
-                    <Grid VerticalAlignment="Top" RowDefinitions="* 8 auto">
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="0">
-                            <ListBox VerticalAlignment="Center" SelectionMode="Multiple,Toggle"
-                                     ItemsSource="{Binding Savefiles}"
-                                     Selection="{Binding Selection}"
-                                     Background="Transparent"
-                                     Grid.IsSharedSizeScope="True">
-                                <ListBox.KeyBindings>
-                                    <KeyBinding Gesture="Delete" Command="{Binding RemoveSelected}" />
-                                </ListBox.KeyBindings>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding Index}"
-                                                       Margin="8 0" HorizontalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="{Binding PlayerName}"
-                                                       FontWeight="SemiBold"
-                                                       Margin="8 0" />
-                                            <TextBlock Grid.Column="2" Text="{Binding Details}"
-                                                       TextTrimming="WordEllipsis" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </ScrollViewer>
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-                            <Button IsEnabled="{Binding EnoughSelectedToMerge}" Command="{Binding Merge}">Merge</Button>
-                            <Button Command="{Binding SelectFiles}" HotKey="Ctrl+O">
-                                <Image Source="{SvgImage /Assets/Images/folder-solid.svg}" />
-                            </Button>
-                            <Button Command="{Binding LoadSavefiles}" HotKey="Ctrl+R">
-                                <Image Source="{SvgImage /Assets/Images/rotate-right-solid.svg}" />
-                            </Button>
-                        </StackPanel>
-                    </Grid>
+                    <views:TabSelect />
                 </TabItem>
                 <TabItem Header="Merge" IsEnabled="{Binding TabMergeEnabled}">
-                    <Grid RowDefinitions="Auto,8,Auto,8,Auto">
-                        <TextBlock IsVisible="{Binding !Resolutions.Count}">No conflicts found.</TextBlock>
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
-                            <ItemsControl ItemsSource="{Binding Resolutions}" Grid.IsSharedSizeScope="True">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0 0 0 8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" SharedSizeGroup="A" />
-                                                <ColumnDefinition Width="8" />
-                                                <ColumnDefinition Width="Auto" SharedSizeGroup="B" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding Path}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="2" Text="{Binding NewText}"
-                                                     Watermark="{Binding Values}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                        <Button Grid.Row="4" Content="{Binding ResolveButtonLabel}" IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}"/>
-                    </Grid>
+                    <views:TabMerge />
                 </TabItem>
                 <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
-                    <StackPanel>
-                        <TextBlock FontSize="22">Note:</TextBlock>
-                        <TextBlock TextWrapping="Wrap" xml:space="preserve">The following things are not merged and will not be included in the savefile:
-- Save &amp; Quit State
-- Any *-modsave files:
-  This includes things like speedberry times or whether a lobby heart gate was opened.
-- That's it but maybe I forgot something important to make sure everyhing looks alright.
-                        </TextBlock>
-
-                        <StackPanel Orientation="Vertical" Spacing="8">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Command="{Binding SaveNewSlot}">Save in new slot</Button>
-                                <Button Command="{Binding SaveAs}">Save As</Button>
-                                <Button Command="{Binding OpenInTextEditor}">Open in Text Editor</Button>
-                            </StackPanel>
-                            <TextBlock Text="{Binding SuccessText}" />
-                        </StackPanel>
-                    </StackPanel>
+                    <views:TabSave />
                 </TabItem>
             </TabControl>
         </DockPanel>
