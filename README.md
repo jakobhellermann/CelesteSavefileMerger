@@ -5,8 +5,7 @@
 <br clear="left" />
 <br />
 
-![Downloads](https://img.shields.io/badge/Downloads-blue?link=https%3A%2F%2Fgithub.com%2Fjakobhellermann%2FCelesteSavefileMerger%2Freleases)
-
+[![Downloads](https://img.shields.io/badge/Downloads-blue)](https://github.com/jakobhellermann/CelesteSavefileMerger/releases)
 
 ## Usage
 
