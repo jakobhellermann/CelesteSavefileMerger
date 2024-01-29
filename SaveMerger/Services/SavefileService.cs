@@ -60,7 +60,7 @@ public class SavefileService : ISavefileService {
     public IEnumerable<Savefile> List() {
         if (FindCelesteDir() is not { } dir) return ArraySegment<Savefile>.Empty;
 
-        _celesteSaveDir = Path.Combine(dir,"Saves");
+        _celesteSaveDir = Path.Combine(dir, "Saves");
 
         return Directory.GetFiles(_celesteSaveDir)
             .Where(file => Path.GetExtension(file) == ".celeste")
@@ -73,7 +73,7 @@ public class SavefileService : ISavefileService {
         if (_celesteSaveDir is null) return null;
 
         var path = Enumerable.Range(0, 10000)
-            .Select(index => Path.Join(_celesteSaveDir,  $"{index}.celeste"))
+            .Select(index => Path.Join(_celesteSaveDir, $"{index}.celeste"))
             .First(path => !Path.Exists(path));
 
         await using var fileStream = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
@@ -186,7 +186,7 @@ public class SavefileService : ISavefileService {
         return $"{seconds}s";
     }
 
-    // manual changes: remove duplicate mt kimitany/path of hope, rename Another Farewell Map, remove glyph d
+    // manual changes: remove duplicate mt kimitany/path of hope, rename Another Farewell Map, remove glyph d, test chamber 317
     private static readonly Dictionary<string, string> PopularMapLevelSetNames = new() {
         { "ABuffZucchiniCollab/0-Lobbies", "ABuffZucchini's Various Maps" },
         { "ABuffZucchiniCollab/1-Lobby", "ABuffZucchini's Various Maps" },
@@ -325,5 +325,6 @@ public class SavefileService : ISavefileService {
         { "WinterCollab2021/0-Gyms", "Winter Collab" },
         { "WinterCollab2021/0-Lobbies", "Winter Collab" },
         { "WinterCollab2021/1-Maps", "Winter Collab" },
+        { "ZucchiniBirthdayCollab2023/1-Submissions", "Test Chamber 317" },
     };
 }
