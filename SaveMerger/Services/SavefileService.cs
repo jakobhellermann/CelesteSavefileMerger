@@ -15,7 +15,7 @@ public class SavefileService : ISavefileService {
 
     // https://github.com/fifty-six/Scarab/blob/68b11ee8596fbfe1ea31e420d49190181788a8a6/Scarab/Settings.cs#L26-L50
 
-    private string? _celesteSaveDir = null;
+    private string? _celesteSaveDir;
 
     private static readonly string[] Paths = new[] {
         "Program Files (x86)/Steam/steamapps/common/Celeste",
@@ -187,7 +187,7 @@ public class SavefileService : ISavefileService {
     }
 
     // manual changes: remove duplicate mt kimitany/path of hope, rename Another Farewell Map, remove glyph d
-    private static Dictionary<string, string> PopularMapLevelSetNames = new() {
+    private static readonly Dictionary<string, string> PopularMapLevelSetNames = new() {
         { "ABuffZucchiniCollab/0-Lobbies", "ABuffZucchini's Various Maps" },
         { "ABuffZucchiniCollab/1-Lobby", "ABuffZucchini's Various Maps" },
         { "AnarchyCollab2022/0-Lobbies", "Anarchy Collab" },
