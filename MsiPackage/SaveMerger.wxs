@@ -1,6 +1,6 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Fragment>
-        <ComponentGroup Id="ExampleComponents" Directory="INSTALLFOLDER">
+        <ComponentGroup Id="SaveMerger" Directory="INSTALLFOLDER">
             <Component>
                 <File Source="./win-x64/publish/SaveMerger.exe" KeyPath="true">
                     <Shortcut Id="Shortcut" Directory="StartMenuFolder" Name="Celeste Savefile Merger" Advertise="true"
