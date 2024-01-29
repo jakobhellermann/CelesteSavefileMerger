@@ -181,7 +181,7 @@ public class SavefileService : ISavefileService {
 
         if (hours > 2) return $"{hours}h";
         if (hours > 0) return $"{hours}h {minutes % 60}min";
-        if (minutes > 0) return $"{minutes % 60}min {seconds % 60}s";
+        if (minutes > 0) return $"{minutes % 60}min";
 
         return $"{seconds}s";
     }
