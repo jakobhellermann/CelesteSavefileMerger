@@ -75,6 +75,9 @@ public partial class MainWindowViewModel : ViewModelBase {
 
     // Merge Tab
     public ObservableCollection<Resolution> Resolutions { get; } = [];
+
+    public string ResolveButtonLabel => Resolutions.Count == 0 ? "Next" : "Resolve";
+
     public bool ResolutionsResolved => Resolutions.All(item => item.NewText.Length > 0);
     private XDocument? _document;
 
@@ -150,6 +153,8 @@ public partial class MainWindowViewModel : ViewModelBase {
                 Resolutions.Add(resolutionItem);
             }
 
+            OnPropertyChanged(nameof(ResolveButtonLabel));
+
             TabIndex = TabIndex.Merge;
         });
     }
@@ -184,9 +189,7 @@ public partial class MainWindowViewModel : ViewModelBase {
         var directoryName = Path.GetDirectoryName(Selection.SelectedItem!.Path);
         var joined = string.Join('+', Selection.SelectedItems.Select(savefile => savefile!.Index));
         _savedFilename = await _savefileService.SaveViaPicker(text, directoryName, joined + ".celeste");
-        SuccessText = "Saved as " + _savedFilename;
-
-        if (_savedFilename is null) Error = "Could not save file";
+        if (_savedFilename is not null) SuccessText = "Saved as " + _savedFilename;
     }
 
     public async void OpenInTextEditor() {

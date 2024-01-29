@@ -99,7 +99,7 @@
                 </TabItem>
                 <TabItem Header="Merge" IsEnabled="{Binding TabMergeEnabled}">
                     <Grid RowDefinitions="Auto,8,Auto,8,Auto">
-                        <TextBlock IsVisible="{Binding !Resolutions.Count}">No resolutions necessary!</TextBlock>
+                        <TextBlock IsVisible="{Binding !Resolutions.Count}">No conflicts found.</TextBlock>
                         <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
                             <ItemsControl ItemsSource="{Binding Resolutions}" Grid.IsSharedSizeScope="True">
                                 <ItemsControl.ItemTemplate>
@@ -119,16 +119,16 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                        <Button Grid.Row="4" IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}">Resolve</Button>
+                        <Button Grid.Row="4" Content="{Binding ResolveButtonLabel}" IsEnabled="{Binding ResolutionsResolved}" Command="{Binding Resolve}"/>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Save" IsEnabled="{Binding TabSaveEnabled}">
                     <StackPanel>
                         <TextBlock FontSize="22">Note:</TextBlock>
-                        <TextBlock TextWrapping="Wrap" xml:space="preserve">The following items are not merged and will not be included in the savefile:
+                        <TextBlock TextWrapping="Wrap" xml:space="preserve">The following things are not merged and will not be included in the savefile:
 - Save &amp; Quit State
 - Any *-modsave files:
-  This includes things like speedberry times or whether a lobby heart gate was opened
+  This includes things like speedberry times or whether a lobby heart gate was opened.
 - That's it but maybe I forgot something important to make sure everyhing looks alright.
                         </TextBlock>
 
